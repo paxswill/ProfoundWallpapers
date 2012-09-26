@@ -109,15 +109,6 @@ class ProfoundProgrammer(Tumblr):
         super().__init__('theprofoundprogrammer')
         self.sfw = safe_for_work
 
-    def _filter_hd(self, tag):
-        if tag.description:
-            if self.sfw:
-                return self.sfw_regex.search(tag.description.text)
-            else:
-                return self.nsfw_regex.search(tag.description.text)
-        else:
-            return False
-
     def extract(self, post):
         soup = BeautifulSoup(post.find('photo-caption').text)
         hd_url = None
