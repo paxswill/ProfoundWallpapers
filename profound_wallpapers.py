@@ -14,25 +14,18 @@ class Feed:
         self.url = feed_url
         self.feed = BeautifulSoup(urlopen(feed_url), "xml")
 
-
-    def pick_top(self):
+    def top(self):
         if self.feed.contents[0] == 'rss':
             return self.feed.item
         elif self.feed.contents[0] == 'feed':
             return self.feed.entry
 
-    def pick_random(self):
+    def random(self):
         if self.feed.contents[0] == 'rss':
             children = self.feed.find_all('items')
         elif self.feed.contents[0] == 'feed':
             children = self.feed.find_all('entry')
         return random.choice(children)
-
-    def top(self):
-        pass # Implement in subclass
-
-    def random(self):
-        pass # Implement in subclass
 
 class Tumblr(Feed):
     def __init__(self, tumblr_name):
