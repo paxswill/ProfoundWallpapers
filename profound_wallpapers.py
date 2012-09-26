@@ -14,29 +14,91 @@ class Feed:
         self.url = feed_url
         self.feed = BeautifulSoup(urlopen(feed_url), "xml")
 
+    def _atom(self):
+        return self.feed.contents[0] == 'feed'
 
-    def pick_top(self):
-        if self.feed.contents[0] == 'rss':
-            return self.feed.item
-        elif self.feed.contents[0] == 'feed':
-            return self.feed.entry
+    def _rss(self):
+        return self.feed.contents[0] == 'rss'
 
-    def pick_random(self):
-        if self.feed.contents[0] == 'rss':
-            children = self.feed.find_all('items')
-        elif self.feed.contents[0] == 'feed':
-            children = self.feed.find_all('entry')
-        return random.choice(children)
+    def _posts(self):
+        if self._rss():
+            return self.feed('item')
+        elif self._atom():
+            return self.feed('event')
+
+    def __len__(self):
+        return len(self._posts())
+
+    def __getitem__(self, key):
+        return self._posts()[key]
+
+    def __iter__(self):
+        return iter(self._posts())
+
+    def extract(self, post):
+        if self._rss():
+            return post.link.text
+        elif self._atom():
+            return post.find(name='link', rel=False)
 
     def top(self):
-        pass # Implement in subclass
+        for post in self:
+            image = self.extract(post)
+            if image:
+                return image
+        else:
+            return None;
 
     def random(self):
-        pass # Implement in subclass
+        image = None
+        watchdog = 0
+        while image is None and watchdog < ( len(self) * 1.5 ):
+            image = self.extract(random.choice(self))
+            watchdog += 1
+        return image
 
 class Tumblr(Feed):
     def __init__(self, tumblr_name):
-        super().__init__("http://{}.tumblr.com/rss".format(tumblr_name))
+        self.url = "http://{}.tumblr.com/api/read?type=photo".format(tumblr_name)
+        self.feed = BeautifulSoup(urlopen(self.url), 'xml')
+
+    def __len__(self):
+        return int(self.feed.posts['total'])
+
+    def __getitem__(self, key):
+        # Screw slices (at least for now)
+        # Support negative indicies
+        if key < 0:
+            key = len(self) + key
+        # Catch out of bounds indices
+        if key < 0 or key > len(self):
+            raise IndexError("post index out of range")
+        # items 0-20 are cached in the initial request
+        if key < 20:
+            return self.feed('post')[key]
+        else:
+            focused_url = "{}&start={}&num=1".format(self.url, key)
+            focused = BeautifulSoup(urlopen(focused_url), 'xml')
+            return focused.post
+
+    def __iter__(self):
+        # Start with the cached 20
+        for index in range(20 if len(self) > 20 else len(self)):
+            yield self[index]
+        # Now go in jumps of 50 towards the end
+        for jump in range(20, len(self), 50):
+            window_url = "{}&start={}&num=50".format(self.url, self.jump)
+            window = BeautifulSoup(urlopen(window_url), 'xml')
+            for post in window('post'):
+                yield post
+
+    def __reversed__(self):
+        pass
+
+    def extract(self, post):
+        photos = post('photo-url')
+        photo = max(photos, 'max-width')
+        return photo.text
 
 class ProfoundProgrammer(Tumblr):
     # Cache the Regexes
@@ -56,25 +118,16 @@ class ProfoundProgrammer(Tumblr):
         else:
             return False
 
-    def pick_top(self):
-        return self.feed.find(self._filter_hd).description.text
-
-    def pick_random(self):
-        return random.choice(self.feed(self._filter_hd)).description.text
-
-    def extract(self, element):
-        soup = BeautifulSoup(element)
+    def extract(self, post):
+        soup = BeautifulSoup(post.find('photo-caption').text)
         if self.sfw:
             hd_url = soup.find(name='a', text=self.sfw_regex, href=True)
         else:
             hd_url = soup.find(name='a', text=self.nsfw_regex, href=True)
-        return hd_url['href']
-
-    def top(self):
-        return self.extract(self.pick_top())
-
-    def random(self):
-        return self.extract(self.pick_random())
+        if hd_url:
+            return hd_url['href']
+        else:
+            return None
 
 def download(image_url, target='~/Pictures/Profound Programmer/'):
     # Create a destination for our images
