@@ -109,8 +109,16 @@ if __name__ == '__main__':
             action="store_true")
     sfw.add_argument("-n", "--nsfw", help="Show all HD versions (Default).",
             action="store_false")
+    which = parser.add_mutually_exclusive_group()
+    which.add_argument("-r", "--random", help="Pick a random image.",
+            action="store_true")
+    which.add_argument("-t", "--top", help="Pick the most recent image.",
+            action="store_true")
     args = parser.parse_args()
     source = ProfoundProgrammer(args.sfw)
-    image_path = download(source.random())
+    if args.random:
+        image_path = download(source.random())
+    else:
+        image_path = download(source.top())
     set_background(image_path)
 
