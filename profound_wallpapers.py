@@ -102,18 +102,22 @@ def set_background(image_path):
     subprocess.call(command)
 
 if __name__ == '__main__':
+    # Build up an argument parser
     parser = argparse.ArgumentParser(description=
         "Desktop updater of images sourced from theprofoundprogrammer.com")
+    # Options controlling safe-for-work-ness
     sfw = parser.add_mutually_exclusive_group()
     sfw.add_argument("-s", "--sfw", help="Only show safe for work versions",
             action="store_true")
     sfw.add_argument("-n", "--nsfw", help="Show all HD versions (Default).",
             action="store_false")
+    # Options controlling which image to pick
     which = parser.add_mutually_exclusive_group()
     which.add_argument("-r", "--random", help="Pick a random image.",
             action="store_true")
     which.add_argument("-t", "--top",
             help="Pick the most recent image (Default).", action="store_true")
+    # Parse away
     parser.set_defaults(nsfw=True, top=True)
     args = parser.parse_args()
     source = ProfoundProgrammer(args.sfw)
