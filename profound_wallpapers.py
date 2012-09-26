@@ -157,11 +157,43 @@ def download(image_url, target='~/Pictures/Profound Programmer/'):
 
 
 def set_background(image_path):
-    applescript = "tell application \"Finder\" to set desktop picture to POSIX\
-            file \"{}\""
-    command = ["/usr/bin/osascript", "-e"]
-    command.append(applescript.format(image_path))
+    if platform.system() == 'Darwin':
+        #OS X
+        applescript = "tell application \"Finder\" to set desktop picture to \
+                POSIX file \"{}\""
+        command = ["/usr/bin/osascript", "-e"]
+        command.append(applescript.format(image_path))
+    else:
+        dt_save = subprocess.check_output(['/usr/bin/xprop', '-root',
+                                           '_DT_SAVE_MODE'])
+        dt_save = dt_save.decode()
+        if dt_save == 'xfce4' or os.environ['DESKTOP_SESSION'] == 'xfce':
+            # Xfce
+            command = ["/usr/bin/xfconf-query", "-c", "xfce4-desktop", "-p",
+                       "/backdrop/screen0/monitor0/image-path", "-s",
+                       image_path]
+        elif os.environ['KDE_FULL_SESSION'] == 'true':
+            # KDE
+            pass
+        elif os.environ['XDG_CURRENT_DESKTOP'] == 'unity':
+            command = ['usr/bin/gsettings', 'set',
+                       'org.gnome.desktop.background', 'picture-uri',
+                       image_path]
+        elif 'GNOME_DESKTOP_SESSION_ID' in os.environ:
+            # Some sort of Gnome
+            gnome_version = subprocess.check_output(['/usr/bin/gnome-session',
+                                                     '--version'])
+            gnome_version = gnome_version.decode()
+            if re.match(re.compile('3'), gnome_version):
+                command = ['usr/bin/gsettings', 'set',
+                           'org.gnome.desktop.background', 'picture-uri',
+                           image_path]
+            elif re.match(re.compile('2'), gnome_version):
+                command = ['/usr/bin/gconftool-2', '-t', 'str', '--set',
+                           '/desktop/gnome/background/picture_filename',
+                           image_path]
     subprocess.call(command)
+
 
 if __name__ == '__main__':
     # Build up an argument parser
