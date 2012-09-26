@@ -29,7 +29,47 @@ class Feed:
 
 class Tumblr(Feed):
     def __init__(self, tumblr_name):
-        super().__init__("http://{}.tumblr.com/rss".format(tumblr_name))
+        self.url = "http://{}.tumblr.com/api/read?type=photo".format(tumblr_name)
+        self.feed = BeautifulSoup(urlopen(tumblr_url), 'xml')
+
+    def __len__(self):
+        return int(self.feed.posts['total'])
+
+    def __getitem__(self, key):
+        # Screw slices (at least for now)
+        # Support negative indicies
+        if key < 0:
+            key = len(self) + key
+        # Catch out of bounds indices
+        if key < 0 or key > len(self):
+            raise TypeError("post index out of range")
+        # items 0-20 are cached in the initial request
+        if key < 20:
+            return self.feed('post')[key]
+        else:
+            focused_url = "{0.s}&start={}&num=1".format(self.url, post_index)
+            restricted = BeautifulSoup(urlopen(focused_url), 'xml')
+            return restricted.post
+
+    def __iter__(self):
+        # Start with the cached 20
+        for index in range(20 if len(self) > 20 else len(self)):
+            yield self[index]
+        # Now go in jumps of 50 towards the end
+        for jump in range(20, len(self), 50):
+            window_url = "{}&start={}&num=50".format(self.url, self.jump)
+            window = BeautifulSoup(urlopen(window_url), 'xml')
+            for post in window('post'):
+                yield post
+
+    def __reversed__(self):
+        pass
+
+    def top(self):
+        return self[0]
+
+    def random(self):
+        return random.choice(self)
 
 class ProfoundProgrammer(Tumblr):
     # Cache the Regexes
