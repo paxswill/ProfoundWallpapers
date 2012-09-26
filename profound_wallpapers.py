@@ -7,6 +7,7 @@ import re
 import os
 import os.path
 import subprocess
+import argparse
 
 class Feed:
     def __init__(self, feed_url):
@@ -101,6 +102,15 @@ def set_background(image_path):
     subprocess.call(command)
 
 if __name__ == '__main__':
-    source = ProfoundProgrammer()
-    set_background(download(source.random()))
+    parser = argparse.ArgumentParser(description=
+        "Desktop updater of images sourced from theprofoundprogrammer.com")
+    sfw = parser.add_mutually_exclusive_group()
+    sfw.add_argument("-s", "--sfw", help="Only show safe for work versions",
+            action="store_true")
+    sfw.add_argument("-n", "--nsfw", help="Show all HD versions (Default).",
+            action="store_false")
+    args = parser.parse_args()
+    source = ProfoundProgrammer(args.sfw)
+    image_path = download(source.random())
+    set_background(image_path)
 
