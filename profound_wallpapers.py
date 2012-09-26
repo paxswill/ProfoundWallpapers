@@ -60,7 +60,7 @@ class Feed:
 class Tumblr(Feed):
     def __init__(self, tumblr_name):
         self.url = "http://{}.tumblr.com/api/read?type=photo".format(tumblr_name)
-        self.feed = BeautifulSoup(urlopen(tumblr_url), 'xml')
+        self.feed = BeautifulSoup(urlopen(self.url), 'xml')
 
     def __len__(self):
         return int(self.feed.posts['total'])
