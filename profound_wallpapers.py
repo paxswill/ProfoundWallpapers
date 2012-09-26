@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
-from urllib.request import urlopen
-from urllib.parse import urlparse
-from bs4 import BeautifulSoup
-import random
-import re
+
+import argparse
 import os
 import os.path
+import random
+import re
 import subprocess
-import argparse
+from urllib.request import urlopen
+from urllib.parse import urlparse
+
+from bs4 import BeautifulSoup
+
 
 class Feed:
     def __init__(self, feed_url):
@@ -47,19 +50,21 @@ class Feed:
             if image:
                 return image
         else:
-            return None;
+            return None
 
     def random(self):
         image = None
         watchdog = 0
-        while image is None and watchdog < ( len(self) * 1.5 ):
+        while image is None and watchdog < (len(self) * 1.5):
             image = self.extract(random.choice(self))
             watchdog += 1
         return image
 
+
 class Tumblr(Feed):
     def __init__(self, tumblr_name):
-        self.url = "http://{}.tumblr.com/api/read?type=photo".format(tumblr_name)
+        self.url = "http://{}.tumblr.com/api/read?type=photo".format(
+            tumblr_name)
         self.feed = BeautifulSoup(urlopen(self.url), 'xml')
 
     def __len__(self):
@@ -100,6 +105,7 @@ class Tumblr(Feed):
         photo = max(photos, 'max-width')
         return photo.text
 
+
 class ProfoundProgrammer(Tumblr):
     # Cache the Regexes
     nsfw_regex = re.compile("HD Version")
@@ -121,6 +127,7 @@ class ProfoundProgrammer(Tumblr):
         else:
             return None
 
+
 def download(image_url, target='~/Pictures/Profound Programmer/'):
     # Create a destination for our images
     target_dir = os.path.expanduser(target)
@@ -139,9 +146,10 @@ def download(image_url, target='~/Pictures/Profound Programmer/'):
             image.write(request.read())
     return destination
 
+
 def set_background(image_path):
-    applescript = \
-        "tell application \"Finder\" to set desktop picture to POSIX file \"{}\""
+    applescript = "tell application \"Finder\" to set desktop picture to POSIX\
+            file \"{}\""
     command = ["/usr/bin/osascript", "-e"]
     command.append(applescript.format(image_path))
     subprocess.call(command)
@@ -149,22 +157,22 @@ def set_background(image_path):
 if __name__ == '__main__':
     # Build up an argument parser
     parser = argparse.ArgumentParser(description=
-        "Desktop updater of images sourced from theprofoundprogrammer.com")
+            "Desktop updater of images sourced from theprofoundprogrammer.com")
     # Options controlling safe-for-work-ness
     sfw = parser.add_mutually_exclusive_group()
-    sfw.add_argument("-s", "--sfw", help="Prefer safe for work versions",
-            action="store_true")
+    sfw.add_argument("-s", "--sfw", action="store_true",
+                     help="Prefer safe for work versions")
     sfw.add_argument("-n", "--nsfw", action="store_false",
-            help="Prefer not safe for work versions (Default).")
+                     help="Prefer not safe for work versions (Default).")
     # Options controlling which image to pick
     which = parser.add_mutually_exclusive_group()
-    which.add_argument("-r", "--random", help="Pick a random image.",
-            action="store_true")
-    which.add_argument("-t", "--top",
-            help="Pick the most recent image (Default).", action="store_true")
+    which.add_argument("-r", "--random", action="store_true",
+                       help="Pick a random image.")
+    which.add_argument("-t", "--top", action="store_true",
+                       help="Pick the most recent image (Default).")
     # Figure out where to put the images
-    parser.add_argument("target", nargs='?', default="~/Pictures/Profound Programmer/",
-            help="Where to save the images to.")
+    parser.add_argument("target", default="~/Pictures/Profound Programmer/",
+                        help="Where to save the images to.", nargs='?')
     # Parse away
     parser.set_defaults(nsfw=True, top=True)
     args = parser.parse_args()
@@ -175,4 +183,3 @@ if __name__ == '__main__':
         image_url = source.top()
     image_path = download(image_url, args.target)
     set_background(image_path)
-
