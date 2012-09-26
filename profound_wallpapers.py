@@ -112,8 +112,9 @@ if __name__ == '__main__':
     which = parser.add_mutually_exclusive_group()
     which.add_argument("-r", "--random", help="Pick a random image.",
             action="store_true")
-    which.add_argument("-t", "--top", help="Pick the most recent image.",
-            action="store_true")
+    which.add_argument("-t", "--top",
+            help="Pick the most recent image (Default).", action="store_true")
+    parser.set_defaults(nsfw=True, top=True)
     args = parser.parse_args()
     source = ProfoundProgrammer(args.sfw)
     if args.random:
