@@ -118,25 +118,16 @@ class ProfoundProgrammer(Tumblr):
         else:
             return False
 
-    def pick_top(self):
-        return self.feed.find(self._filter_hd).description.text
-
-    def pick_random(self):
-        return random.choice(self.feed(self._filter_hd)).description.text
-
-    def extract(self, element):
-        soup = BeautifulSoup(element)
+    def extract(self, post):
+        soup = BeautifulSoup(post.find('photo-caption').text)
         if self.sfw:
             hd_url = soup.find(name='a', text=self.sfw_regex, href=True)
         else:
             hd_url = soup.find(name='a', text=self.nsfw_regex, href=True)
-        return hd_url['href']
-
-    def top(self):
-        return self.extract(self.pick_top())
-
-    def random(self):
-        return self.extract(self.pick_random())
+        if 'href' in hd_url:
+            return hd_url['href']
+        else:
+            return None
 
 def download(image_url, target='~/Pictures/Profound Programmer/'):
     # Create a destination for our images
