@@ -6,16 +6,24 @@ import os.path
 import random
 import re
 import subprocess
-from urllib.request import urlopen
-from urllib.parse import urlparse
+import platform
+# Python 2.x Workaround
+if int(platform.python_version_tuple()[0]) < 3:
+    from urllib2 import urlopen
+    from urlparse import urlparse
+else:
+    from urllib.request import urlopen
+    from urllib.parse import urlparse
 
 from bs4 import BeautifulSoup
 
 
-class Feed:
+class Feed(object):
     def __init__(self, feed_url):
         self.url = feed_url
-        self.feed = BeautifulSoup(urlopen(feed_url), "xml")
+        request = urlopen(feed_url)
+        self.feed = BeautifulSoup(request, "xml")
+        request.close()
 
     def _atom(self):
         return self.feed.contents[0] == 'feed'
@@ -111,7 +119,7 @@ class ProfoundProgrammer(Tumblr):
     sfw_regex = re.compile("HD Safe-For-Work Version")
 
     def __init__(self, safe_for_work=False):
-        super().__init__('theprofoundprogrammer')
+        Tumblr.__init__(self, 'theprofoundprogrammer')
         self.sfw = safe_for_work
 
     def extract(self, post):
@@ -141,8 +149,10 @@ def download(image_url, target='~/Pictures/Profound Programmer/'):
     destination = os.path.join(target_dir, image_name)
     # Don't download it again if we already have it
     if not os.path.exists(destination):
-        with urlopen(image_url) as request, open(destination, 'wb') as image:
+        request = urlopen(image_url)
+        with open(destination, 'wb') as image:
             image.write(request.read())
+        request.close()
     return destination
 
 
