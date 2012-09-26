@@ -77,9 +77,9 @@ class Tumblr(Feed):
         if key < 20:
             return self.feed('post')[key]
         else:
-            focused_url = "{0.s}&start={}&num=1".format(self.url, post_index)
-            restricted = BeautifulSoup(urlopen(focused_url), 'xml')
-            return restricted.post
+            focused_url = "{}&start={}&num=1".format(self.url, key)
+            focused = BeautifulSoup(urlopen(focused_url), 'xml')
+            return focused.post
 
     def __iter__(self):
         # Start with the cached 20
