@@ -7,6 +7,7 @@ import re
 import os
 import os.path
 import subprocess
+import argparse
 
 class Feed:
     def __init__(self, feed_url):
@@ -75,9 +76,9 @@ class ProfoundProgrammer(Tumblr):
     def random(self):
         return self.extract(self.pick_random())
 
-def download(image_url):
+def download(image_url, target='~/Pictures/Profound Programmer/'):
     # Create a destination for our images
-    target_dir = os.path.expanduser('~/Pictures/Profound Programmer/')
+    target_dir = os.path.expanduser(target)
     if not os.path.exists(target_dir):
         os.mkdir(target_dir)
     elif not os.path.exists(target_dir):
@@ -101,6 +102,32 @@ def set_background(image_path):
     subprocess.call(command)
 
 if __name__ == '__main__':
-    source = ProfoundProgrammer()
-    set_background(download(source.random()))
+    # Build up an argument parser
+    parser = argparse.ArgumentParser(description=
+        "Desktop updater of images sourced from theprofoundprogrammer.com")
+    # Options controlling safe-for-work-ness
+    sfw = parser.add_mutually_exclusive_group()
+    sfw.add_argument("-s", "--sfw", help="Only show safe for work versions",
+            action="store_true")
+    sfw.add_argument("-n", "--nsfw", help="Show all HD versions (Default).",
+            action="store_false")
+    # Options controlling which image to pick
+    which = parser.add_mutually_exclusive_group()
+    which.add_argument("-r", "--random", help="Pick a random image.",
+            action="store_true")
+    which.add_argument("-t", "--top",
+            help="Pick the most recent image (Default).", action="store_true")
+    # Figure out where to put the images
+    parser.add_argument("target", nargs='?', default="~/Pictures/Profound Programmer/",
+            help="Where to save the images to.")
+    # Parse away
+    parser.set_defaults(nsfw=True, top=True)
+    args = parser.parse_args()
+    source = ProfoundProgrammer(args.sfw)
+    if args.random:
+        image_url = source.random()
+    else:
+        image_url = source.top()
+    image_path = download(image_url, args.target)
+    set_background(image_path)
 
