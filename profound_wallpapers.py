@@ -35,11 +35,27 @@ class Feed:
     def __iter__(self):
         return iter(self._posts())
 
+    def extract(self, post):
+        if self._rss():
+            return post.link.text
+        elif self._atom():
+            return post.find(name='link', rel=False)
+
     def top(self):
-        return self[0]
+        for post in self:
+            image = self.extract(post)
+            if image:
+                return image
+        else:
+            return None;
 
     def random(self):
-        return random.choice(self)
+        image = None
+        watchdog = 0
+        while image is None and watchdog < ( len(self) * 1.5 ):
+            image = self.extract(random.choice(self))
+            watchdog += 1
+        return image
 
 class Tumblr(Feed):
     def __init__(self, tumblr_name):
