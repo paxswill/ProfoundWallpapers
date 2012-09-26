@@ -95,6 +95,11 @@ class Tumblr(Feed):
     def __reversed__(self):
         pass
 
+    def extract(self, post):
+        photos = post('photo-url')
+        photo = max(photos, 'max-width')
+        return photo.text
+
 class ProfoundProgrammer(Tumblr):
     # Cache the Regexes
     nsfw_regex = re.compile("HD Version")
