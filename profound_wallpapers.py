@@ -120,9 +120,10 @@ class ProfoundProgrammer(Tumblr):
 
     def extract(self, post):
         soup = BeautifulSoup(post.find('photo-caption').text)
+        hd_url = None
         if self.sfw:
             hd_url = soup.find(name='a', text=self.sfw_regex, href=True)
-        else:
+        if hd_url is None:
             hd_url = soup.find(name='a', text=self.nsfw_regex, href=True)
         if hd_url:
             return hd_url['href']
@@ -160,10 +161,10 @@ if __name__ == '__main__':
         "Desktop updater of images sourced from theprofoundprogrammer.com")
     # Options controlling safe-for-work-ness
     sfw = parser.add_mutually_exclusive_group()
-    sfw.add_argument("-s", "--sfw", help="Only show safe for work versions",
+    sfw.add_argument("-s", "--sfw", help="Prefer safe for work versions",
             action="store_true")
-    sfw.add_argument("-n", "--nsfw", help="Show all HD versions (Default).",
-            action="store_false")
+    sfw.add_argument("-n", "--nsfw", action="store_false",
+            help="Prefer not safe for work versions (Default).")
     # Options controlling which image to pick
     which = parser.add_mutually_exclusive_group()
     which.add_argument("-r", "--random", help="Pick a random image.",
