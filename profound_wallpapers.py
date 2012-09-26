@@ -14,18 +14,32 @@ class Feed:
         self.url = feed_url
         self.feed = BeautifulSoup(urlopen(feed_url), "xml")
 
+    def _atom(self):
+        return self.feed.contents[0] == 'feed'
+
+    def _rss(self):
+        return self.feed.contents[0] == 'rss'
+
+    def _posts(self):
+        if self._rss():
+            return self.feed('item')
+        elif self._atom():
+            return self.feed('event')
+
+    def __len__(self):
+        return len(self._posts())
+
+    def __getitem__(self, key):
+        return self._posts()[key]
+
+    def __iter__(self):
+        return iter(self._posts())
+
     def top(self):
-        if self.feed.contents[0] == 'rss':
-            return self.feed.item
-        elif self.feed.contents[0] == 'feed':
-            return self.feed.entry
+        return self[0]
 
     def random(self):
-        if self.feed.contents[0] == 'rss':
-            children = self.feed.find_all('items')
-        elif self.feed.contents[0] == 'feed':
-            children = self.feed.find_all('entry')
-        return random.choice(children)
+        return random.choice(self)
 
 class Tumblr(Feed):
     def __init__(self, tumblr_name):
@@ -42,7 +56,7 @@ class Tumblr(Feed):
             key = len(self) + key
         # Catch out of bounds indices
         if key < 0 or key > len(self):
-            raise TypeError("post index out of range")
+            raise IndexError("post index out of range")
         # items 0-20 are cached in the initial request
         if key < 20:
             return self.feed('post')[key]
@@ -64,12 +78,6 @@ class Tumblr(Feed):
 
     def __reversed__(self):
         pass
-
-    def top(self):
-        return self[0]
-
-    def random(self):
-        return random.choice(self)
 
 class ProfoundProgrammer(Tumblr):
     # Cache the Regexes
