@@ -124,10 +124,7 @@ class ProfoundProgrammer(Tumblr):
             hd_url = soup.find(name='a', text=self.sfw_regex, href=True)
         else:
             hd_url = soup.find(name='a', text=self.nsfw_regex, href=True)
-        if 'href' in hd_url:
-            return hd_url['href']
-        else:
-            return None
+        return hd_url['href']
 
 def download(image_url, target='~/Pictures/Profound Programmer/'):
     # Create a destination for our images
